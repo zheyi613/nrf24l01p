@@ -101,17 +101,21 @@ int main(void)
   //   .air_data_rate = _2Mbps,
   //   .output_power = _0dBm,
   //   .crc_len = CRC_TWO_BYTES,
-  //   .address_width = FIVE_BYTES,
+  //   .address_width = 5,
   //   .auto_retransmit_count = 6,
   //   .auto_retransmit_delay = 250
   // };
-  len = snprintf((char *)str, 100, "nrf24l01+ initializate...%s", "\n\r");
+  int result = 0;
+  result = nrf24l01_check();
+  if (result == 0)
+    HAL_GPIO_WritePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin, GPIO_PIN_SET);
+  len = snprintf((char *)str, 100, "nrf24l01+ checking...%d\n\r", result);
   HAL_UART_Transmit(&huart1, str, len, 100);
   // nrf24l01p_init(&nrf24l01p_param);
   #ifdef TRANSMITTER
-    nrf24l01p_tx_init(2410, _2Mbps);
+    nrf24l01p_tx_init(2432, _2Mbps);
   #else
-    nrf24l01p_rx_init(2410, _2Mbps);
+    nrf24l01p_rx_init(2432, _2Mbps);
   #endif
   #ifdef TRANSMITTER
     for (uint8_t i = 0; i < 32; i++) {
@@ -127,6 +131,12 @@ int main(void)
   while (1)
   {
     #ifdef TRANSMITTER
+      for (uint8_t i = 0; i < 32; i++) {
+        if (payload[i] == 255)
+          payload[i] = 0;
+        else
+          payload[i]++;
+      }
       nrf24l01p_tx_transmit(payload);
     #endif
     len = snprintf((char *)str, 100, "p0: %d, p1: %d, p2: %d\n\r",

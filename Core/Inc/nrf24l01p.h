@@ -101,6 +101,7 @@ void nrf24l01p_set_address_widths(widths bytes);
 void nrf24l01p_auto_retransmit_count(count cnt);
 void nrf24l01p_auto_retransmit_delay(delay us);
 
+int nrf24l01_check(void);
 
 /* nRF24L01+ Commands */
 #define NRF24L01P_CMD_R_REGISTER                  0b00000000

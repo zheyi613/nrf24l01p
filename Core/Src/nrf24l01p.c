@@ -151,8 +151,8 @@ void nrf24l01p_reset()
     write_register(NRF24L01P_REG_SETUP_AW, 0x03);
     write_register(NRF24L01P_REG_SETUP_RETR, 0x03);
     write_register(NRF24L01P_REG_RF_CH, 0x02);
-    write_register(NRF24L01P_REG_RF_SETUP, 0x07);
-    write_register(NRF24L01P_REG_STATUS, 0x7E);
+    write_register(NRF24L01P_REG_RF_SETUP, 0x0E);
+    write_register(NRF24L01P_REG_STATUS, 0x70);
     write_register(NRF24L01P_REG_RX_PW_P0, 0x00);
     write_register(NRF24L01P_REG_RX_PW_P0, 0x00);
     write_register(NRF24L01P_REG_RX_PW_P1, 0x00);
@@ -160,7 +160,6 @@ void nrf24l01p_reset()
     write_register(NRF24L01P_REG_RX_PW_P3, 0x00);
     write_register(NRF24L01P_REG_RX_PW_P4, 0x00);
     write_register(NRF24L01P_REG_RX_PW_P5, 0x00);
-    write_register(NRF24L01P_REG_FIFO_STATUS, 0x11);
     write_register(NRF24L01P_REG_DYNPD, 0x00);
     write_register(NRF24L01P_REG_FEATURE, 0x00);
 
@@ -368,4 +367,15 @@ void nrf24l01p_set_rf_air_data_rate(air_data_rate bps)
             break;
     }
     write_register(NRF24L01P_REG_RF_SETUP, new_rf_setup);
+}
+
+int nrf24l01_check(void)
+{
+        uint8_t val = 0;
+
+        val = read_register(NRF24L01P_REG_RX_ADDR_P0);
+        if (val == 0xE7)
+                return 0;
+        else
+                return 1;
 }
