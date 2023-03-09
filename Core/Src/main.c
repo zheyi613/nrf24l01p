@@ -51,6 +51,9 @@
 uint8_t str[100];
 uint8_t len;
 uint8_t payload[32] = {0};
+#ifdef NRF24L01P_ACK_PAYLOAD
+uint8_t ack_payload[3] = {0, 1, 2};
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,53 +99,62 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   DWT_Init();
-  // struct nrf24l01p_cfg nrf24l01p_param = {
-  //   .channel = 2410,
-  //   .air_data_rate = _2Mbps,
-  //   .output_power = _0dBm,
-  //   .crc_len = CRC_TWO_BYTES,
-  //   .address_width = 5,
-  //   .auto_retransmit_count = 6,
-  //   .auto_retransmit_delay = 250
-  // };
-  int result = 0;
-  result = nrf24l01_check();
-  if (result == 0)
-    HAL_GPIO_WritePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin, GPIO_PIN_SET);
-  len = snprintf((char *)str, 100, "nrf24l01+ checking...%d\n\r", result);
-  HAL_UART_Transmit(&huart1, str, len, 100);
-  // nrf24l01p_init(&nrf24l01p_param);
+  struct nrf24l01p_cfg nrf24l01p_param = {
   #ifdef TRANSMITTER
-    nrf24l01p_tx_init(2432, _2Mbps);
+    .mode = PTX_MODE,
   #else
-    nrf24l01p_rx_init(2432, _2Mbps);
+    .mode = PRX_MODE,
   #endif
-  #ifdef TRANSMITTER
-    for (uint8_t i = 0; i < 32; i++) {
-      payload[i] = i;
+    .crc_len = CRC_TWO_BYTES,
+    .air_data_rate = _2Mbps,
+    .output_power = _0dBm,
+    .channel = 2432,
+    .address_width = 5,
+    .auto_retransmit_count = 6,
+    .auto_retransmit_delay = 500
+  };
+  if (nrf24l01p_init(&nrf24l01p_param)) {
+    while (1) {
+      HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
+      HAL_Delay(1000);
     }
-  #endif
+  }
   len = snprintf((char *)str, 100, "nrf24l01+ initialization done...%s", "\n\r");
   HAL_UART_Transmit(&huart1, str, len, 100);
+#ifdef TRANSMITTER
+  for (uint8_t i = 0; i < 32; i++) {
+    payload[i] = i;
+  }
+#endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    #ifdef TRANSMITTER
-      for (uint8_t i = 0; i < 32; i++) {
-        if (payload[i] == 255)
-          payload[i] = 0;
-        else
-          payload[i]++;
-      }
-      nrf24l01p_tx_transmit(payload);
-    #endif
+#ifdef TRANSMITTER
+    for (uint8_t i = 0; i < 32; i++) {
+      if (payload[i] == 255)
+        payload[i] = 0;
+      else
+        payload[i]++;
+    }
+  #ifdef NRF24L01P_ACK_PAYLOAD
+    nrf24l01p_transmit(payload, 10);
+    HAL_Delay(100);
+    len = snprintf((char *)str, 100, "ack>>p0: %d, p1: %d, p2: %d\n\r",
+                   ack_payload[0], ack_payload[1], ack_payload[2]);
+    HAL_UART_Transmit(&huart1, str, len, 100);
+  #else
+    nrf24l01p_transmit(payload);
+    HAL_Delay(100);
+  #endif
+#else
     len = snprintf((char *)str, 100, "p0: %d, p1: %d, p2: %d\n\r",
                    payload[0], payload[1], payload[2]);
     HAL_UART_Transmit(&huart1, str, len, 100);
     HAL_Delay(100);
+#endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -200,11 +212,32 @@ void SystemClock_Config(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if (GPIO_Pin == NRF_IRQ_Pin) {
-    #ifdef TRANSMITTER
-      nrf24l01p_tx_irq();
-    #else
-      nrf24l01p_rx_receive(payload);
-    #endif
+#ifdef TRANSMITTER
+  #ifdef NRF24L01P_ACK_PAYLOAD
+    if (nrf24l01p_tx_irq(ack_payload))
+  #else
+    if (nrf24l01p_tx_irq())
+  #endif
+      HAL_GPIO_WritePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin, GPIO_PIN_RESET);
+    else
+      HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
+#else
+  #ifdef NRF24L01P_ACK_PAYLOAD
+    if (ack_payload[2] == 255) {
+      ack_payload[0] = 0;
+      ack_payload[1] = 1;
+      ack_payload[2] = 2;
+    } else {
+      ack_payload[0]++;
+      ack_payload[1]++;
+      ack_payload[2]++;
+    }
+    nrf24l01p_rxtx(payload, ack_payload, 3);
+  #else
+    nrf24l01p_receive(payload);
+  #endif
+    HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
+#endif
   }
 }
 /* USER CODE END 4 */
