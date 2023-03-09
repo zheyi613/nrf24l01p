@@ -1,5 +1,5 @@
 # nrf24l01p
-NRF24L01+ driver for stm32
+NRF24L01+ driver
 
 # Interface define 
 
