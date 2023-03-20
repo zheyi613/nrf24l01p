@@ -36,10 +36,11 @@ Just present important parts
 ## PRX mode
 
 ```c
+uint8_t payload[8];
+
 int main(void)
 {
   int result = 0;
-  uint8_t payload[8];
   result = nrf24l01p_init(&nrf24l01p.param);
   if (result) /* If result equal to 1, device maybe lost */
     while (1)
@@ -60,7 +61,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 ## PTX mode
 
 ```c
-int max_retransmit_flag = 0; /* check up to max retransmission count or not */
+int max_retransmit_flag = 0; /* check if max retransmission count or not */
 
 int main(void)
 {
@@ -91,12 +92,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 ## PRX mode with ACK payload
 
 ```c
+uint8_t payload[8];
 uint8_t ack_payload[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 int main(void)
 {
   int result = 0;
-  uint8_t payload[8];
   result = nrf24l01p_init(&nrf24l01p.param);
   if (result) /* If result equal to 1, device maybe lost */
     while (1)
