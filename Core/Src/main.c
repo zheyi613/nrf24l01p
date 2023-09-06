@@ -125,6 +125,8 @@ int main(void)
   for (uint8_t i = 0; i < 32; i++) {
     payload[i] = i;
   }
+#else
+  nrf24l01p_start_rx();
 #endif
   /* USER CODE END 2 */
 
@@ -232,10 +234,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
       ack_payload[1]++;
       ack_payload[2]++;
     }
-    nrf24l01p_rxtx(payload, ack_payload, 3);
-  #else
-    nrf24l01p_receive(payload);
+    nrf24l01p_write_ack_payload(ack_payload, 3);
   #endif
+    nrf24l01p_receive(payload);
     HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
 #endif
   }

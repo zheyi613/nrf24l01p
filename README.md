@@ -45,6 +45,7 @@ int main(void)
   if (result) /* If result equal to 1, device maybe lost */
     while (1)
       ;
+  nrf24l01p_start_rx();
 
   while (1) {
     /* don't care about here */
@@ -102,6 +103,7 @@ int main(void)
   if (result) /* If result equal to 1, device maybe lost */
     while (1)
       ;
+  nrf24l01p_start_rx();
 
   while (1) {
     /* don't care about here */
@@ -111,7 +113,8 @@ int main(void)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  nrf24l01p_rxtx(payload, ack_payload, 8);
+  nrf24l01p_write_ack_payload(ack_payload, 3);
+  nrf24l01p_receive(payload);
 }
 ```
 
